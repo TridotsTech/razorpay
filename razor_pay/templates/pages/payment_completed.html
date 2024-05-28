@@ -1,0 +1,103 @@
+{% extends "templates/web.html" %}
+{% block loader %}
+{% include "/templates/pages/defaultpageloader.html" %}
+{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="th-txt">
+        <div class="row">
+            <div class="col-md-12 col-xs-12 col-xs-12">
+                <div class="thank-you-page">
+                    {{pay_status}}
+                    {% if pay_status==0 or  pay_status=="0" %}
+                    
+            <h3 class="title-sub-text" style="margin-top: 80px;">Your payment has been failed!</h3>
+                            
+                            <div>
+                                <a href="/razor_pay_checkout?order_id={{orderid}}&&key={{key}}" class="btn btn-warning" style="">Pay Again</a>
+                               
+                            </div>  
+                            {%else%}  
+		    
+                       
+                            <h1 class="title-sub-textt">Your order has been received</h1>
+                            <!-- <h3 class="title-sub-text">Thank you for your purchase!</h3> -->
+                           
+                            <div>
+                                <p class="">Your order number: {{orderid}}</p>
+                            </div>
+                                              
+                            {%endif%}
+                       
+			
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style type="text/css">
+
+    .th-txt{
+    	min-height: 400px;
+    	background: #fff;
+    	margin: 20px;
+    	padding: 20px;
+    }
+    .title-text{
+    	font-weight: 300;
+    }
+    .title-sub-text{
+    	font-weight: 300;
+    }
+    .th-txt a.btn{
+    	border-radius: 0;
+    	padding: 8px 14px;
+    }
+    @media screen and  (min-width: 768px){
+    .thank-you-page
+    {
+
+    width: 570px;
+    margin: 0 auto;
+    float: none;
+    text-align: center;
+
+    }
+}
+@media screen and  (max-width: 767px){
+.th-txt {
+    min-height: 400px;
+    background: #fff;
+    margin: 0;
+    padding: 20px;
+    margin-top: 20px;
+}
+.centerdiv{
+        width: 100%  !important;
+    margin: 30% auto;
+    text-align: center;
+    line-height: 25px;
+}
+ .thank-you-page h4
+{
+        line-height: 35px;
+}
+}
+label.form-check-label {
+    font-weight: normal;
+    font-size: 14px;
+    margin-bottom: 0;
+    line-height: 24px;
+    margin-top: -3px;
+    float: left;
+}
+</style>
+{% block script %}
+<script>
+    $(document).ready(function() {
+       
+});
+</script>
+{% endblock %}
+
+{% endblock %}

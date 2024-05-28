@@ -1,0 +1,114 @@
+{% extends "templates/Layout/customweb.html" %}
+{% block loader %}
+<!-- {% include "/templates/pages/defaultpageloader.html" %} -->
+{% endblock %}
+{% block content %}
+<script src="/assets/ecommerce_business_store/js/razor-checkout.js"></script>
+<script>
+		var options = {
+		"key": "{{gateway_settings.api_key}}",
+		"amount": '{{((payable_amount | float)*100) | int}}', // 2000 paise = INR 20
+		"name": "{{catalog_settings.site_name}}",
+		"description":"Payment For Shipping Bag: {{order_id}}",
+		"image": "{{gateway_settings.site_logo}}",
+		"handler": demoSuccessHandler,
+		"prefill": {
+		"name": '{{customer.first_name}} {{customer.last_name}}',
+		"email": '{{customer.email}}',
+		"contact":'{{customer.phone}}'
+		},
+		"modal": {
+			"backdropclose": true,
+			"ondismiss": function () {
+				var result = confirm("Are you sure want close?");
+				if (result)
+				{
+					window.location.href = "/thankyou";
+				}
+				else {
+					setTimeout(function () {
+						$(".razorpay-backdrop").show();
+						$(".razorpay-backdrop").css("background", "rgba(0, 0, 0, 0.6)");
+						$(".razorpay-backdrop span").css("opacity", "1");
+						$(".razorpay-container").show();
+						rzp1.open();
+					}, 500);
+
+
+				}
+			}
+		},
+		"notes": {
+			
+
+		},
+		"theme": {
+			"color": "{{theme_settings.primary_button_background_color}}"
+		}
+	};
+	var rzp1 = new Razorpay(options);
+
+	rzp1.open();
+
+	function demoSuccessHandler(transaction) {
+		$(".page-load").show();
+				$.ajax({
+		        type: 'POST',
+		        Accept: 'application/json',
+		        ContentType: 'application/json;charset=utf-8',
+		        url: window.location.origin ,
+		        data: { 'order_id': '{{order_id}}', 'transaction_id':transaction.razorpay_payment_id,"cmd":"razor_pay.templates.pages.razorpay_checkout.update_order_status"},
+		        dataType: "json",
+		        async: false,
+		        headers: {
+                    'X-Frappe-CSRF-Token': frappe.csrf_token
+                },
+		        success: function(data) {
+					if (data.message.status == true) {
+		
+					window.location.href = "/thankyou?shipmentid={{order_id}}";
+				
+					}
+				else {
+					if(data.message.message!="")
+					{
+						$('#message_modal .modal-title').text('Message');
+					    let html = '<div style="line-height:30px">'+data.message.message+' Please contact administrator to procceed further.</div><div style="text-align:right;border-top: 1px solid #e5e5e5;margin-top: 10px;padding-top: 15px;width: calc(100% + 30px);margin-left: -15px;padding-right: 15px;"><a class="btn btn-warning"  href="/contact-us" style="margin-right:15px;">Contact</a><a class="btn btn-danger"  href="/thankyou?shipmentid={{order_id}}">Cancel</a></div>'
+					    $('#message_modal .modal-body').html(html)
+					    $('#message_modal').modal('show');
+					}
+					else{
+					setTimeout(function () {
+								$(".razorpay-backdrop").show();
+								$(".razorpay-backdrop").css("background", "rgba(0, 0, 0, 0.6)");
+								$(".razorpay-backdrop span").css("opacity", "1");
+								$(".razorpay-container").show();
+						rzp1.open();
+					}, 500);
+					}
+				}
+			},
+
+				});
+ 
+
+	}
+
+</script>
+<style type="text/css">
+	.entire_header,.entire_footer, header, footer, .footer
+	{
+		display: none !important;
+	}
+	.page-load {
+    position: absolute;
+    top: 50%;
+    text-align: center;
+    width: 100%;
+    display: none;
+}
+</style>
+<div class="page-load">
+	Loading...
+	</div>
+{% endblock %}

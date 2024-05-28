@@ -1,0 +1,193 @@
+{
+ "actions": [],
+ "creation": "2019-04-11 10:42:50.769898",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "api_key",
+  "column_break_2",
+  "api_secret",
+  "column_break_4",
+  "is_redirect_another_url",
+  "column_break_6",
+  "redirect_controller",
+  "redirect_url",
+  "section_break_6",
+  "routing_enable",
+  "site_logo",
+  "column_break_8",
+  "account_id",
+  "cancel_refund",
+  "no_of_days_allowed_for_refund",
+  "column_break_10",
+  "return_refund",
+  "commission_percentage",
+  "vendor_routing",
+  "vendor_routing_mapping",
+  "webhook_secret",
+  "aggregate_partner_section",
+  "allow_partner_creation",
+  "send_email_to"
+ ],
+ "fields": [
+  {
+   "fieldname": "api_key",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "API Key",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "api_secret",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "API Secret",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:(doc.is_redirect_another_url==0)",
+   "fieldname": "redirect_controller",
+   "fieldtype": "Data",
+   "label": "Redirect Controller"
+  },
+  {
+   "fieldname": "section_break_6",
+   "fieldtype": "Section Break"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval: (frappe.boot.active_domains.includes(frappe.boot.sysdefaults.domain_constants.single_vendor)) || (frappe.boot.active_domains.includes(frappe.boot.sysdefaults.domain_constants.restaurant))",
+   "fieldname": "routing_enable",
+   "fieldtype": "Check",
+   "label": "Routing Enable"
+  },
+  {
+   "fieldname": "site_logo",
+   "fieldtype": "Attach Image",
+   "label": "Site Logo"
+  },
+  {
+   "fieldname": "column_break_8",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.routing_enable==1",
+   "fieldname": "account_id",
+   "fieldtype": "Data",
+   "label": "Routing Account Id"
+  },
+  {
+   "depends_on": "eval:doc.routing_enable==1",
+   "fieldname": "no_of_days_allowed_for_refund",
+   "fieldtype": "Data",
+   "label": "No of Days Allowed for Refund "
+  },
+  {
+   "fieldname": "column_break_10",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.routing_enable==1",
+   "fieldname": "commission_percentage",
+   "fieldtype": "Float",
+   "label": "Commission Percentage"
+  },
+  {
+   "depends_on": "eval: frappe.boot.active_domains.includes(frappe.boot.sysdefaults.domain_constants.multi_vendor)",
+   "fieldname": "vendor_routing",
+   "fieldtype": "Section Break",
+   "label": "Vendor Routing "
+  },
+  {
+   "fieldname": "vendor_routing_mapping",
+   "fieldtype": "Table",
+   "label": "Vendor Routing Mapping",
+   "options": "Razorpay Vendor Routing"
+  },
+  {
+   "default": "0",
+   "fieldname": "is_redirect_another_url",
+   "fieldtype": "Check",
+   "label": "Is Redirect Another Url"
+  },
+  {
+   "fieldname": "column_break_6",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:(doc.is_redirect_another_url==1)",
+   "fieldname": "redirect_url",
+   "fieldtype": "Data",
+   "label": "Redirect URL"
+  },
+  {
+   "fieldname": "webhook_secret",
+   "fieldtype": "Password",
+   "hidden": 1,
+   "label": "Webhook Secret"
+  },
+  {
+   "fieldname": "aggregate_partner_section",
+   "fieldtype": "Section Break",
+   "hidden": 1,
+   "label": "Aggregate Partner"
+  },
+  {
+   "default": "0",
+   "fieldname": "allow_partner_creation",
+   "fieldtype": "Check",
+   "label": "Allow Aggregate Partner Creation?"
+  },
+  {
+   "depends_on": "eval: doc.allow_partner_creation == 1",
+   "fieldname": "send_email_to",
+   "fieldtype": "Data",
+   "label": "Send Email To"
+  },
+  {
+   "default": "0",
+   "fieldname": "cancel_refund",
+   "fieldtype": "Check",
+   "label": "Enable Refund On Cancellation Of Order?"
+  },
+  {
+   "default": "0",
+   "fieldname": "return_refund",
+   "fieldtype": "Check",
+   "label": "Enable Refund On Return Created?"
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2023-08-02 11:42:06.659481",
+ "modified_by": "Administrator",
+ "module": "Razor Pay",
+ "name": "Razor Pay Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

@@ -1,0 +1,108 @@
+{% extends "templates/Layout/customweb.html" %}
+{% block loader %}
+<!-- {% include "/templates/pages/defaultpageloader.html" %} -->
+{% endblock %}
+{% block content %}
+
+<script src="/assets/ecommerce_business_store/js/razor-checkout.js"></script>
+<script>
+	
+		var options = {
+		"key": "{{gateway_settings.api_key}}",
+		"amount": '{{order_info.outstanding_amount*100 | int}}', // 2000 paise = INR 20
+		"name": "{{catalog_settings.get('site_name')}}",
+		"description":"Payment For Order:{{order_info.name}}",
+		"image": "{{gateway_settings.site_logo}}",
+		"handler": demoSuccessHandler,
+		"prefill": {
+		"name": '{{order_info.customer_name}}',
+		"email": '{{order_info.customer_email}}',
+		"contact":'{{order_info.phone}}'
+		},
+		"modal": {
+			"backdropclose": true,
+			"ondismiss": function () {
+				var result = confirm("Are you sure want close?");
+				if (result)
+				{
+					window.location.href = "{{domainurl}}/"+"thankyou";
+				}
+				else {
+					setTimeout(function () {
+						$(".razorpay-backdrop").show();
+						$(".razorpay-backdrop").css("background", "rgba(0, 0, 0, 0.6)");
+						$(".razorpay-backdrop span").css("opacity", "1");
+						$(".razorpay-container").show();
+						rzp1.open();
+					}, 500);
+
+
+				}
+			}
+		},
+		"notes": {
+			"Billing Address": '{{order_info.first_name}} {{order_info.last_name}},{{order_info.address}},{{order_info.city}},{{order_info.state}},{{order_info.zipcode}}-{{order_info.country}},{{order_info.phone}}',
+			"Shipping Address": '{{order_info.shipping_first_name}} {{order_info.shipping_last_name}},{{order_info.shipping_shipping_address}},{{order_info.shipping_city}},{{order_info.shipping_state}},{{order_info.shipping_zipcode}}-{{order_info.shipping_country}},{{order_info.shipping_phone}}',
+			"Shipping Charges": '{{order_info.shipping_charges}}',
+			"Website": '{{frappe.local.request.host}}',
+			"Tax": '{{order_info.total_tax_amount}}'
+
+		},
+		"theme": {
+			"color": "{{theme_settings.primary_button_background_color}}"
+		}
+	};
+	var rzp1 = new Razorpay(options);
+
+	rzp1.open();
+
+	function demoSuccessHandler(transaction) {
+		$(".page-load").show();
+				$.ajax({
+		        type: 'POST',
+		        Accept: 'application/json',
+		        ContentType: 'application/json;charset=utf-8',
+		        url: window.location.origin ,
+		        data: { 'order_id': '{{order_info.name}}', 'transaction_id':transaction.razorpay_payment_id,"cmd":"razor_pay.templates.pages.razor_pay_payment.update_order_status","domain":'{{domainurl}}'},
+		        dataType: "json",
+		        async: false,
+		        success: function(data) {
+					if (data.message == "success") {
+		
+					window.location.href = "{{domainurl}}/"+"thankyou";
+				
+					}
+				else {
+					setTimeout(function () {
+								$(".razorpay-backdrop").show();
+								$(".razorpay-backdrop").css("background", "rgba(0, 0, 0, 0.6)");
+								$(".razorpay-backdrop span").css("opacity", "1");
+								$(".razorpay-container").show();
+						rzp1.open();
+					}, 500);
+				}
+			},
+
+				});
+ 
+
+	}
+
+</script>
+<style type="text/css">
+	.entire_header,.entire_footer
+	{
+		display: none !important;
+	}
+	.page-load {
+    position: absolute;
+    top: 50%;
+    text-align: center;
+    width: 100%;
+    display: none;
+}
+</style>
+<div class="page-load">
+	Loading...
+	</div>
+{% endblock %}

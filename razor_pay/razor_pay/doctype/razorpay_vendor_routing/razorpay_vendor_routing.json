@@ -1,0 +1,53 @@
+{
+ "creation": "2020-01-02 13:16:08.031205",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "vendor",
+  "vendor_name",
+  "account_id",
+  "commission_percentage"
+ ],
+ "fields": [
+  {
+   "fieldname": "vendor",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Vendor",
+   "options": "Business"
+  },
+  {
+   "fetch_from": "vendor.restaurant_name",
+   "fieldname": "vendor_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Vendor Name"
+  },
+  {
+   "fieldname": "account_id",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Account Id",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "commission_percentage",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Commission Percentage"
+  }
+ ],
+ "istable": 1,
+ "modified": "2020-01-29 19:20:19.586475",
+ "modified_by": "Administrator",
+ "module": "Razor Pay",
+ "name": "Razorpay Vendor Routing",
+ "owner": "Administrator",
+ "permissions": [],
+ "quick_entry": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "track_changes": 1
+}
