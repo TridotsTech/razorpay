@@ -4,9 +4,7 @@ from __future__ import unicode_literals
 import frappe
 import razorpay
 from frappe import _
-from ecommerce_business_store.ecommerce_business_store.doctype.business_payment_gateway_settings.business_payment_gateway_settings import get_payments
-from ecommerce_business_store.utils.setup import get_settings_value_from_domain, get_settings_from_domain
-from ecommerce_business_store.ecommerce_business_store.api import check_domain
+from ecommerce_business_store_singlevendor.utils.setup import get_settings_from_domain
 
 def get_context(context):
 	order_id = frappe.form_dict.order_id
@@ -84,11 +82,11 @@ def get_context(context):
 						context.order_id = check_order[0].name
 				context.customer = customer
 				gateway_settings = None
-				if order_info.get('business'):
-					gateway_settings = get_payments(order_info.business, 'Razorpay')
-				if not gateway_settings:
-					if order_info.order_item[0].business:
-						gateway_settings = get_payments(order_info.order_item[0].business, 'Razorpay')
+				# if order_info.get('business'):
+				# 	gateway_settings = get_payments(order_info.business, 'Razorpay')
+				# if not gateway_settings:
+				# 	if order_info.order_item[0].business:
+				# 		gateway_settings = get_payments(order_info.order_item[0].business, 'Razorpay')
 				if not gateway_settings:
 					gateway_settings = frappe.get_single('Razor Pay Settings')
 				if gateway_settings.api_key != '' and gateway_settings.api_secret != '':
@@ -96,8 +94,9 @@ def get_context(context):
 						context.catalog_settings = get_settings_from_domain('Catalog Settings')
 					context.gateway_settings = gateway_settings
 			else:
-				from ecommerce_business_store.ecommerce_business_store.api import submit_order
-				submit_order(order_id)
+				order = frappe.get_doc('Order', order_id)
+				order.docstatus = 1
+				order.save(ignore_permissions=True)
 				if order_info.order_from=="WhatsApp":
 					frappe.local.flags.redirect_location = '/payment-completed?order='+order_id
 					raise frappe.Redirect
@@ -121,18 +120,18 @@ def update_order_status(order_id, transaction_id, capture=None):
 		if validate_stock:
 			gateway_settings = None
 			order_info=frappe.get_doc("Order",order_id)
-			if order_info.get('business'):
-				gateway_settings = get_payments(order_info.business, 'Razorpay')
-			if not gateway_settings:
-				if order_info.order_item[0].business:
-					gateway_settings = get_payments(order_info.order_item[0].business, 'Razorpay')
+			# if order_info.get('business'):
+			# 	gateway_settings = get_payments(order_info.business, 'Razorpay')
+			# if not gateway_settings:
+			# 	if order_info.order_item[0].business:
+			# 		gateway_settings = get_payments(order_info.order_item[0].business, 'Razorpay')
 			if not gateway_settings:
 				gateway_settings=frappe.get_single('Razor Pay Settings')
 			capture_payment = 1
-			if check_domain('restaurant'):
-				capture_payment = get_settings_value_from_domain('Business Setting', 'capture_payment', business=order_info.get('business'))
-			else:
-				capture_payment = 1
+			# if check_domain('restaurant'):
+			# 	capture_payment = get_settings_value_from_domain('Business Setting', 'capture_payment', business=order_info.get('business'))
+			# else:
+			# 	capture_payment = 1
 			if int(capture_payment) == 1:
 				complete_payment(gateway_settings, order_info, transaction_id)			
 			else:
@@ -174,45 +173,45 @@ def validate_products_stock(order_id):
 
 def complete_payment(gateway_settings, order_info, transaction_id):
 	try:
-		if (not check_domain('multi_vendor') and not check_domain('restaurant')) or check_domain('saas'):
+		# if (not check_domain('multi_vendor') and not check_domain('restaurant')) or check_domain('saas'):
 			client = razorpay.Client(auth=(gateway_settings.api_key, gateway_settings.api_secret))
 			order_settings = get_settings_from_domain('Order Settings')
-			if check_domain('saas') and not check_domain('restaurant'):
-				check_order = frappe.db.get_all('Vendor Orders', filters={'order_reference': order_info.name},fields=['*'])
-				payment = client.payment.fetch(transaction_id)
-				if payment.get('captured') != True:
-					client.payment.capture(transaction_id, int(order_info.outstanding_amount*100))
+			# if check_domain('saas') and not check_domain('restaurant'):
+			# 	check_order = frappe.db.get_all('Vendor Orders', filters={'order_reference': order_info.name},fields=['*'])
+			# 	payment = client.payment.fetch(transaction_id)
+			# 	if payment.get('captured') != True:
+			# 		client.payment.capture(transaction_id, int(order_info.outstanding_amount*100))
+			# else:
+			# Inserted by suguna on 17/08/20
+			payable_amount = 0
+			# if order_settings.enable_preorder==1:
+			if order_info.advance_amount > 0 and order_info.payment_status!="Partially Paid":
+				payable_amount = order_info.advance_amount
 			else:
-				# Inserted by suguna on 17/08/20
-				payable_amount = 0
-				# if order_settings.enable_preorder==1:
-				if order_info.advance_amount > 0 and order_info.payment_status!="Partially Paid":
-					payable_amount = order_info.advance_amount
-				else:
-					payable_amount = order_info.outstanding_amount
-				# else:
-				# 	payable_amount = order_info.outstanding_amount
+				payable_amount = order_info.outstanding_amount
+			# else:
+			# 	payable_amount = order_info.outstanding_amount
+			# end
+			# #by siva 11/02/2021
+			if order_info.is_shipment_bag_item==1:
+				payable_amount = payable_amount
+			# #end
+			amount_to_capture = int(payable_amount*100)
+			payment = client.payment.fetch(transaction_id)
+			# frappe.log_error(title="payment obj",message=payment)
+			if payment.get('captured') != True:
+				# by gopi on 5/2/24
+				# client.payment.capture(transaction_id, amount_to_capture)
+				payable_amount = int(payment.get("amount"))
+				client.payment.capture(transaction_id, payable_amount)
 				# end
-				# #by siva 11/02/2021
-				if order_info.is_shipment_bag_item==1:
-					payable_amount = payable_amount
-				# #end
-				amount_to_capture = int(payable_amount*100)
-				payment = client.payment.fetch(transaction_id)
-				# frappe.log_error(title="payment obj",message=payment)
-				if payment.get('captured') != True:
-					# by gopi on 5/2/24
-					# client.payment.capture(transaction_id, amount_to_capture)
-					payable_amount = int(payment.get("amount"))
-					client.payment.capture(transaction_id, payable_amount)
-					# end
 			if gateway_settings.get('routing_enable') == 1:
 				if gateway_settings.account_id != '':
 					order_id = order_info.name
-					if check_domain('saas'):
-						check_order = frappe.db.get_all('Vendor Orders', filters={'order_reference': order_id})
-						if check_order:
-							order_id = check_order[0].name
+					# if check_domain('saas'):
+					# 	check_order = frappe.db.get_all('Vendor Orders', filters={'order_reference': order_id})
+					# 	if check_order:
+					# 		order_id = check_order[0].name
 					# Inserted by suguna on 17/08/20
 					if order_settings.enable_preorder==1:
 						if order_info.advance_amount > 0 and order_info.payment_status!="Partially Paid":
@@ -273,7 +272,7 @@ def complete_payment(gateway_settings, order_info, transaction_id):
 					payment_transfer = client.payment.transfer(transaction_id, data=param)
 					transfer = payment_transfer.get("items")[0]
 					transfer_id = transfer.get("id")
-					from ecommerce_business_store.accounts.api import make_payment as _make_payment
+					from ecommerce_business_store_singlevendor.accounts.api import make_payment as _make_payment
 					# Inserted by suguna on 17/08/20
 					if order_settings.enable_preorder==1 and order_info.advance_amount > 0 and order_info.payment_status!="Partially Paid":
 						payment_amout = order_info.advance_amount
@@ -285,7 +284,8 @@ def complete_payment(gateway_settings, order_info, transaction_id):
 						payment_amout = payment_amout
 					#end
 					_make_payment(order=order_info.name, mode_of_payment='Razor Pay', amount=payment_amout,transaction_id=transaction_id)
-					submit_order=get_settings_value_from_domain('Order Settings','submit_order')
+					# submit_order =get_settings_value_from_domain('Order Settings','submit_order')
+					submit_order = get_settings_from_domain('Order Settings').get('submit_order')
 					if submit_order:
 						order_info = frappe.get_doc(order_info.doctype, order_info.name) 
 						# Inserted by suguna on 17/08/20
@@ -305,7 +305,7 @@ def complete_payment(gateway_settings, order_info, transaction_id):
 						order_info.transaction_id = transfer_id
 						order_info.save(ignore_permissions=True)
 			else:
-				from ecommerce_business_store.accounts.api import make_payment as _make_payment
+				from ecommerce_business_store_singlevendor.accounts.api import make_payment as _make_payment
 				# Inserted by suguna on 17/08/20
 				if  order_info.advance_amount > 0 and order_info.payment_status!="Partially Paid":
 					payment_amount = order_info.advance_amount
@@ -320,7 +320,9 @@ def complete_payment(gateway_settings, order_info, transaction_id):
 				payment_amount = payment.get("amount") / 100
 				# end
 				_make_payment(order=order_info.name, mode_of_payment='Razor Pay', amount=payment_amount,payment_type='Receive',transaction_id=transaction_id)
-				submit_order=get_settings_value_from_domain('Order Settings','submit_order')
+				# _make_payment(order=order_info.name, mode_of_payment='Razor Pay', amount=payment_amount)
+				# submit_order=get_settings_value_from_domain('Order Settings','submit_order')
+				submit_order = get_settings_from_domain('Order Settings').get('submit_order')
 				if submit_order:
 					order_info = frappe.get_doc(order_info.doctype, order_info.name) 
 					if order_settings.enable_preorder==1 and order_info.advance_amount > 0 and order_info.payment_status!="Partially Paid":
@@ -340,8 +342,8 @@ def complete_payment(gateway_settings, order_info, transaction_id):
 					#from ecommerce_business_store.ecommerce_business_store.doctype.order.order import update_giftcard_payments as update_giftcard_payments
 					#update_giftcard_payments(order_info.name,order_info.transaction_id)
 			return "success"
-		else:
-			multi_vendor_payments(gateway_settings, order_info, transaction_id)
+		# else:
+		# 	multi_vendor_payments(gateway_settings, order_info, transaction_id)
 	except Exception as e:
 		frappe.log_error(frappe.get_traceback(), "razor_pay.templates.pages.razor_pay_checkout.complete_payment")
 
@@ -351,9 +353,10 @@ def multi_vendor_payments(gateway_settings, order_info, transaction_id):
 	payment = client.payment.fetch(transaction_id)
 	if payment.get('captured') != True:
 		client.payment.capture(transaction_id, int(order_info.outstanding_amount*100))
-	from ecommerce_business_store.accounts.api import make_payment as _make_payment
+	from ecommerce_business_store_singlevendor.accounts.api import make_payment as _make_payment
 	_make_payment(order=order_info.name, mode_of_payment='Razor Pay',  amount=order_info.outstanding_amount)
-	submit_order=get_settings_value_from_domain('Order Settings','submit_order')
+	# submit_order=get_settings_value_from_domain('Order Settings','submit_order')
+	submit_order = get_settings_from_domain('Order Settings').get('submit_order')
 	if submit_order:
 		order_info = frappe.get_doc(order_info.doctype, order_info.name) 
 		order_info.docstatus = 1
